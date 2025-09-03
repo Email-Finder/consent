@@ -1,9 +1,6 @@
 <script>
 /**
- * Cookie Consent + Pluggable Trackers (single-consent)
- * - Paste in <head>. Do NOT include GA/Plausible/Pixel elsewhere.
- * - Edit `config.tools` to add/remove trackers.
- * - Exposes window.CookieConsent.accept()/reject()/reset() if you need custom UI.
+ * Cookie Consent + Pluggable Trackers (production ready with GA Ads ID)
  */
 (function () {
   var BRAND_PRIMARY = '#E65100';   // EmailFinder primary
@@ -11,40 +8,21 @@
   var KEY = 'cookieConsent';
   var config = {
     policyUrl: '/cookie-policy.html',
-    // ===== Add/remove tools here =====
     tools: [
       {
-        name: 'google_analytics',
+        name: 'google_ads_gtag',
         load: function () {
-          loadScript('https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX', { async: true })
+          // Google tag (gtag.js) for Ads ID: AW-17514416458
+          loadScript('https://www.googletagmanager.com/gtag/js?id=AW-17514416458', { async: true })
             .then(function () {
               window.dataLayer = window.dataLayer || [];
               window.gtag = function () { dataLayer.push(arguments); };
               gtag('js', new Date());
-              gtag('config', 'G-XXXXXXX');
+              gtag('config', 'AW-17514416458');
             });
         }
-      },
-      {
-        name: 'plausible',
-        load: function () {
-          // Replace with your domain
-          loadScript('https://plausible.io/js/plausible.js', { defer: true, 'data-domain': 'emailfinder.xyz' });
-        }
-      },
-      {
-        name: 'meta_pixel',
-        load: function () {
-          // Minimal Meta Pixel init; replace with your Pixel ID
-          !function (f, b, e, v, n, t, s) {
-            if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
-            t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
-          }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-          window.fbq('init', '000000000000000'); // <-- your Pixel ID
-          window.fbq('track', 'PageView');
-        }
       }
+      // 👉 Add more tools here (Plausible, Meta Pixel, etc.)
     ]
   };
 
@@ -110,7 +88,7 @@
     });
   }
 
-  // Public API (optional)
+  // Public API
   window.CookieConsent = {
     accept: function(){ save(true); removeBanner(); runTools(); },
     reject: function(){ save(false); removeBanner(); },
