@@ -3,239 +3,100 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cookie Consent Banner Example</title>
+    <title>Simple Consent Demo</title>
     <style>
       :root {
-        color-scheme: light dark;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        --primary: #e65100;
-        --secondary: #ff9800;
-        --bg: #0f172a;
-        --card: rgba(15, 23, 42, 0.7);
-        --text: #f1f5f9;
-      }
-
-      * {
-        box-sizing: border-box;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #0f172a;
       }
 
       body {
         margin: 0;
+        background: #f8fafc;
         min-height: 100vh;
-        background: radial-gradient(circle at top, #1e293b 0%, #020617 70%);
-        color: var(--text);
+      }
+
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 40px 16px 80px;
         display: flex;
         flex-direction: column;
-        gap: 48px;
-        padding: 48px 16px 120px;
-      }
-
-      header,
-      main,
-      footer {
-        width: min(960px, 100%);
-        margin: 0 auto;
-      }
-
-      header {
-        text-align: center;
-      }
-
-      h1 {
-        font-size: clamp(2.25rem, 4vw, 3rem);
-        margin-bottom: 16px;
-      }
-
-      p {
-        line-height: 1.6;
-        margin: 0 0 16px;
-      }
-
-      code {
-        background: rgba(255, 255, 255, 0.12);
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.9em;
-      }
-
-      .card {
-        background: var(--card);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 20px;
-        padding: 32px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-      }
-
-      .layout {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 24px;
       }
 
-      .demo {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+      h1 {
+        margin-bottom: 8px;
       }
 
-      .demo-status {
-        font-weight: 600;
-        font-size: 1.1rem;
-      }
-
-      .demo-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-
-      button.demo-btn {
-        padding: 10px 18px;
-        border-radius: 999px;
-        border: 0;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: transform 0.15s ease, opacity 0.15s ease;
-      }
-
-      button.demo-btn:active {
-        transform: translateY(1px);
-      }
-
-      .btn-reset {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text);
-      }
-
-      .btn-accept {
-        background: var(--primary);
-        color: #fff;
-      }
-
-      .btn-reject {
-        background: rgba(255, 255, 255, 0.15);
-        color: #fff;
+      code,
+      pre {
+        background: #0f172a;
+        color: #f1f5f9;
+        border-radius: 8px;
+        padding: 12px 16px;
       }
 
       pre {
-        background: rgba(2, 6, 23, 0.7);
-        padding: 16px;
-        border-radius: 16px;
         overflow-x: auto;
-        font-size: 0.9rem;
       }
 
-      footer {
-        text-align: center;
-        color: rgba(241, 245, 249, 0.7);
+      section.demo {
+        border: 1px solid #cbd5f5;
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      }
+
+      button {
+        padding: 10px 16px;
+        border-radius: 6px;
+        border: none;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:active {
+        transform: translateY(1px);
       }
     </style>
+    <script src="consent.js"></script>
   </head>
   <body>
-    <header>
-      <p>Drop this script in your project</p>
-      <h1>Cookie Consent Banner Demo</h1>
-      <p>
-        The banner below is powered by the script inside <code>consent.html</code> and
-        demonstrates how analytics scripts stay paused until a visitor clicks
-        “Accept”.
-      </p>
-    </header>
-
-    <main class="layout">
-      <section class="card demo">
-        <h2>Interactive example</h2>
-        <p>
-          Trigger the banner via the buttons below. Analytics code will only run
-          when the user grants consent.
-        </p>
-        <p class="demo-status" id="consent-status">Checking current status…</p>
-        <div class="demo-actions">
-          <button class="demo-btn btn-accept" id="demo-accept">Simulate accept()</button>
-          <button class="demo-btn btn-reject" id="demo-reject">Simulate reject()</button>
-          <button class="demo-btn btn-reset" id="demo-reset">Reset choice</button>
-        </div>
-        <pre><code>&lt;script type="text/plain" data-category="analytics"&gt;
-  // Analytics code is deferred until "Accept"
-  console.log('gtag or pixel booted');
-&lt;/script&gt;</code></pre>
-        <p>
-          Open your browser console to see the analytics placeholder logging once
-          you opt-in.
-        </p>
-        <script type="text/plain" data-category="analytics">
-          console.log('[analytics] Running only because consent was granted');
-        </script>
-      </section>
-
-      <section class="card">
-        <h2>How it works</h2>
+    <main>
+      <header>
+        <p>Drop the script in your &lt;head&gt; and mark analytics tags as deferred.</p>
+        <h1>A tiny two-step consent helper</h1>
         <ol>
-          <li>The script renders a bottom banner asking for cookie consent.</li>
-          <li>When the visitor accepts, we activate any script tags that have <code>type="text/plain"</code> and <code>data-category="analytics"</code>.</li>
-          <li>Choices are stored in <code>localStorage</code> so the experience persists between visits.</li>
+          <li>Include <code>&lt;script src="consent.js"&gt;&lt;/script&gt;</code> anywhere inside your &lt;head&gt;.</li>
+          <li>
+            Update analytics tags to <code>type="text/plain"</code> and add
+            <code>data-category="analytics"</code>.
+          </li>
         </ol>
-        <p>
-          You can customise the message, hook into the events
-          (<code>cookie-consent:accepted</code> / <code>cookie-consent:rejected</code>)
-          or wire your own policy link via the exposed <code>CookieConsent.config</code>.
-        </p>
+        <pre><code>&lt;script src="consent.js"&gt;&lt;/script&gt;
+&lt;script type="text/plain" data-category="analytics" src="gtag.js"&gt;&lt;/script&gt;</code></pre>
+      </header>
+
+      <section class="demo">
+        <h2>Try it</h2>
+        <p>Open the console. The block below runs only after you press “Accept”.</p>
+        <script type="text/plain" data-category="analytics">
+          console.log('[analytics] Tracking code booted after consent');
+        </script>
+        <button id="reset-consent">Reset stored choice</button>
       </section>
     </main>
 
-    <footer>
-      Built for fast demos – copy the script below into your own page.
-    </footer>
-
     <script>
-      (function () {
-        var KEY = 'cookieConsent';
-        var statusLabel = document.getElementById('consent-status');
-        var acceptBtn = document.getElementById('demo-accept');
-        var rejectBtn = document.getElementById('demo-reject');
-        var resetBtn = document.getElementById('demo-reset');
-
-        function refreshStatus() {
-          var state = localStorage.getItem(KEY);
-          var map = { yes: 'granted ✅', no: 'rejected 🚫' };
-          statusLabel.textContent = state
-            ? 'Current preference: ' + map[state]
-            : 'Current preference: not chosen yet';
-        }
-
-        window.addEventListener('cookie-consent:accepted', refreshStatus);
-        window.addEventListener('cookie-consent:rejected', refreshStatus);
-
-        acceptBtn.addEventListener('click', function () {
-          if (window.CookieConsent) window.CookieConsent.accept();
-          else localStorage.setItem(KEY, 'yes');
-          refreshStatus();
-        });
-
-        rejectBtn.addEventListener('click', function () {
-          if (window.CookieConsent) window.CookieConsent.reject();
-          else localStorage.setItem(KEY, 'no');
-          refreshStatus();
-        });
-
-        resetBtn.addEventListener('click', function () {
-          if (window.CookieConsent) {
-            window.CookieConsent.reset();
-          } else {
-            localStorage.removeItem(KEY);
-          }
-          refreshStatus();
-          window.location.reload();
-        });
-
-        refreshStatus();
-      })();
-    </script>
-
-    <!-- Consent script -->
-    <script>
-
+      document.getElementById('reset-consent').addEventListener('click', function () {
+        if (window.SimpleConsent) window.SimpleConsent.reset();
+        else localStorage.removeItem('simple-consent-choice');
+        window.location.reload();
+      });
     </script>
   </body>
 </html>
