@@ -1,101 +1,157 @@
-/**
- * Cookie Consent + Pluggable Trackers (production ready with GA Ads ID)
- */
 (function () {
-  var BRAND_PRIMARY = '#E65100';   // EmailFinder primary
-  var BRAND_SECONDARY = '#FF9800'; // EmailFinder secondary
-  var KEY = 'cookieConsent';
-  var config = {
-    policyUrl: '/cookie-policy.html'
-  };
+  var STORAGE_KEY = 'simple-consent-choice';
+  var BANNER_ID = 'simple-consent-banner';
+  var hasActivated = false;
 
-  // ---------- Core ----------
-  var hasActivatedScripts = false;
+  function readChoice() {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function writeChoice(value) {
+    try {
+      if (value === null) localStorage.removeItem(STORAGE_KEY);
+      else localStorage.setItem(STORAGE_KEY, value);
+    } catch (err) {
+      // Ignore storage errors – the banner will show again next visit.
+    }
+  }
 
   function activateAnalyticsScripts() {
-    if (hasActivatedScripts) return;
-    hasActivatedScripts = true;
+    if (hasActivated) return;
+    hasActivated = true;
 
     function startActivation() {
-      var deferredScripts = document.querySelectorAll('script[type="text/plain"][data-category="analytics"]');
+      var placeholders = document.querySelectorAll('script[type="text/plain"][data-category="analytics"]');
+      Array.prototype.forEach.call(placeholders, function (placeholder) {
+        var liveScript = document.createElement('script');
 
-      Array.prototype.forEach.call(deferredScripts, function (placeholder) {
-        var activated = document.createElement('script');
-        Array.prototype.slice.call(placeholder.attributes).forEach(function (attr) {
-          if (attr.name === 'type') return;
-          activated.setAttribute(attr.name, attr.value);
+        Array.prototype.forEach.call(placeholder.attributes, function (attr) {
+          if (attr.name === 'type' || attr.name === 'data-category') return;
+          liveScript.setAttribute(attr.name, attr.value);
         });
 
         if (placeholder.src) {
-          activated.src = placeholder.src;
+          liveScript.src = placeholder.src;
         } else {
-          activated.textContent = placeholder.textContent;
+          liveScript.textContent = placeholder.textContent;
         }
 
-        placeholder.parentNode.insertBefore(activated, placeholder.nextSibling);
+        placeholder.parentNode.insertBefore(liveScript, placeholder.nextSibling);
         placeholder.parentNode.removeChild(placeholder);
       });
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startActivation);
-    else startActivation();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startActivation);
+    } else {
+      startActivation();
+    }
   }
 
-  function stateAccepted() { return localStorage.getItem(KEY) === 'yes'; }
-  function stateRejected() { return localStorage.getItem(KEY) === 'no'; }
-  function save(choice) { localStorage.setItem(KEY, choice ? 'yes' : 'no'); }
+  function hideBanner() {
+    var existing = document.getElementById(BANNER_ID);
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+  }
 
-  function removeBanner() {
-    var el = document.getElementById('cookie-consent');
-    if (el && el.parentNode) el.parentNode.removeChild(el);
+  function handleChoice(accepted) {
+    writeChoice(accepted ? 'yes' : 'no');
+    hideBanner();
+    if (accepted) activateAnalyticsScripts();
+  }
+
+  function buildButton(label, isPrimary) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.style.border = 'none';
+    button.style.cursor = 'pointer';
+    button.style.padding = '8px 14px';
+    button.style.borderRadius = '4px';
+    button.style.fontSize = '14px';
+    button.style.fontWeight = '600';
+    button.style.background = isPrimary ? '#2563eb' : '#e2e8f0';
+    button.style.color = isPrimary ? '#fff' : '#0f172a';
+    button.style.marginLeft = '8px';
+    return button;
   }
 
   function showBanner() {
-    if (document.getElementById('cookie-consent')) return;
-    var bar = document.createElement('div');
-    bar.id = 'cookie-consent';
-    bar.setAttribute('role', 'dialog');
-    bar.setAttribute('aria-live', 'polite');
-    bar.style.cssText = [
-      'position:fixed','left:0','right:0','bottom:0','z-index:1080',
-      'background:#111','color:#fff','box-shadow:0 -6px 20px rgba(0,0,0,.3)'
-    ].join(';');
+    if (document.getElementById(BANNER_ID)) return;
 
-    bar.innerHTML = '' +
-      '<div style="max-width:1140px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">' +
-        '<span style="font-size:14px;line-height:1.4;flex:1">We use cookies to improve your experience and analyze traffic.</span>' +
-        '<a href="'+ (config.policyUrl || '#') +'" style="color:'+BRAND_SECONDARY+';text-decoration:underline;font-size:14px" target="_blank" rel="noopener">Learn more</a>' +
-        '<button id="cc-reject" style="background:#333;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:14px">Reject</button>' +
-        '<button id="cc-accept" style="background:'+BRAND_PRIMARY+';color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:14px">Accept</button>' +
-      '</div>';
+    var container = document.createElement('div');
+    container.id = BANNER_ID;
+    container.setAttribute('role', 'dialog');
+    container.setAttribute('aria-live', 'polite');
+    container.style.position = 'fixed';
+    container.style.left = '0';
+    container.style.right = '0';
+    container.style.bottom = '0';
+    container.style.zIndex = '2147483647';
+    container.style.background = '#0f172a';
+    container.style.color = '#f8fafc';
+    container.style.padding = '16px';
+    container.style.boxShadow = '0 -4px 16px rgba(0,0,0,0.2)';
 
-    document.body.appendChild(bar);
+    var message = document.createElement('span');
+    message.textContent = 'We use a single optional cookie to enable analytics. Accept cookies?';
+    message.style.fontSize = '14px';
+    message.style.lineHeight = '1.4';
 
-    document.getElementById('cc-accept').addEventListener('click', function () {
-      save(true); removeBanner(); activateAnalyticsScripts();
-      window.dispatchEvent(new CustomEvent('cookie-consent:accepted'));
-    });
-    document.getElementById('cc-reject').addEventListener('click', function () {
-      save(false); removeBanner();
-      window.dispatchEvent(new CustomEvent('cookie-consent:rejected'));
-    });
+    var actions = document.createElement('div');
+    actions.style.marginTop = '12px';
+
+    var acceptBtn = buildButton('Accept', true);
+    var rejectBtn = buildButton('Reject', false);
+
+    acceptBtn.addEventListener('click', function () { handleChoice(true); });
+    rejectBtn.addEventListener('click', function () { handleChoice(false); });
+
+    actions.appendChild(acceptBtn);
+    actions.appendChild(rejectBtn);
+
+    container.appendChild(message);
+    container.appendChild(actions);
+
+    document.body.appendChild(container);
   }
 
-  // Public API
-  window.CookieConsent = {
-    accept: function(){ save(true); removeBanner(); activateAnalyticsScripts(); },
-    reject: function(){ save(false); removeBanner(); },
-    reset: function(){ localStorage.removeItem(KEY); },
-    config: config
+  function init() {
+    var choice = readChoice();
+
+    if (choice === 'yes') {
+      activateAnalyticsScripts();
+      return;
+    }
+
+    if (choice === 'no') return;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', showBanner);
+    } else {
+      showBanner();
+    }
+  }
+
+  function resetChoice() {
+    writeChoice(null);
+    hasActivated = false;
+    hideBanner();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', showBanner);
+    } else {
+      showBanner();
+    }
+  }
+
+  window.SimpleConsent = {
+    accept: function () { handleChoice(true); },
+    reject: function () { handleChoice(false); },
+    reset: resetChoice
   };
 
-  // Boot
-  if (stateAccepted()) {
-    activateAnalyticsScripts();
-  } else if (stateRejected()) {
-    // do nothing
-  } else {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showBanner);
-    else showBanner();
-  }
+  init();
 })();
