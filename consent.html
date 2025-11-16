@@ -7,54 +7,39 @@
   var BRAND_SECONDARY = '#FF9800'; // EmailFinder secondary
   var KEY = 'cookieConsent';
   var config = {
-    policyUrl: '/cookie-policy.html',
-    tools: [
-      {
-        name: 'google_ads_gtag',
-        load: function () {
-          // Google tag (gtag.js) for Ads ID: AW-17514416458
-          loadScript('https://www.googletagmanager.com/gtag/js?id=AW-17514416458', { async: true })
-            .then(function () {
-              window.dataLayer = window.dataLayer || [];
-              window.gtag = function () { dataLayer.push(arguments); };
-              gtag('js', new Date());
-              gtag('config', 'AW-17514416458');
-            });
-        }
-      },
-      {
-        name: 'plausible',
-        load: function () {
-          loadScript('https://plausible.symbolist.in/js/script.js', {
-            defer: true,
-            'data-domain': 'emailfinder.xyz'
-          });
-        }
-      }
-      // 👉 Add more tools here (Plausible, Meta Pixel, etc.)
-    ]
+    policyUrl: '/cookie-policy.html'
   };
 
   // ---------- Core ----------
-  function loadScript(src, attrs) {
-    return new Promise(function (resolve, reject) {
-      var s = document.createElement('script');
-      s.src = src;
-      if (attrs) {
-        Object.keys(attrs).forEach(function (k) {
-          if (attrs[k] === true) s.setAttribute(k, '');
-          else s.setAttribute(k, attrs[k]);
-        });
-      }
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
+  var hasActivatedScripts = false;
 
-  function runTools() {
-    (config.tools || []).forEach(function (t) {
-      try { t.load && t.load(); } catch (e) { console && console.warn('Tracker failed:', t.name, e); }
-    });
+  function activateAnalyticsScripts() {
+    if (hasActivatedScripts) return;
+    hasActivatedScripts = true;
+
+    function startActivation() {
+      var deferredScripts = document.querySelectorAll('script[type="text/plain"][data-category="analytics"]');
+
+      Array.prototype.forEach.call(deferredScripts, function (placeholder) {
+        var activated = document.createElement('script');
+        Array.prototype.slice.call(placeholder.attributes).forEach(function (attr) {
+          if (attr.name === 'type') return;
+          activated.setAttribute(attr.name, attr.value);
+        });
+
+        if (placeholder.src) {
+          activated.src = placeholder.src;
+        } else {
+          activated.textContent = placeholder.textContent;
+        }
+
+        placeholder.parentNode.insertBefore(activated, placeholder.nextSibling);
+        placeholder.parentNode.removeChild(placeholder);
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startActivation);
+    else startActivation();
   }
 
   function stateAccepted() { return localStorage.getItem(KEY) === 'yes'; }
@@ -88,7 +73,7 @@
     document.body.appendChild(bar);
 
     document.getElementById('cc-accept').addEventListener('click', function () {
-      save(true); removeBanner(); runTools();
+      save(true); removeBanner(); activateAnalyticsScripts();
       window.dispatchEvent(new CustomEvent('cookie-consent:accepted'));
     });
     document.getElementById('cc-reject').addEventListener('click', function () {
@@ -99,7 +84,7 @@
 
   // Public API
   window.CookieConsent = {
-    accept: function(){ save(true); removeBanner(); runTools(); },
+    accept: function(){ save(true); removeBanner(); activateAnalyticsScripts(); },
     reject: function(){ save(false); removeBanner(); },
     reset: function(){ localStorage.removeItem(KEY); },
     config: config
@@ -107,7 +92,7 @@
 
   // Boot
   if (stateAccepted()) {
-    runTools();
+    activateAnalyticsScripts();
   } else if (stateRejected()) {
     // do nothing
   } else {
