@@ -1,1 +1,354 @@
-a simple demo to check consent working
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cookie Consent Banner Example</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --primary: #e65100;
+        --secondary: #ff9800;
+        --bg: #0f172a;
+        --card: rgba(15, 23, 42, 0.7);
+        --text: #f1f5f9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #1e293b 0%, #020617 70%);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+        padding: 48px 16px 120px;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(960px, 100%);
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+      }
+
+      h1 {
+        font-size: clamp(2.25rem, 4vw, 3rem);
+        margin-bottom: 16px;
+      }
+
+      p {
+        line-height: 1.6;
+        margin: 0 0 16px;
+      }
+
+      code {
+        background: rgba(255, 255, 255, 0.12);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+      }
+
+      .demo {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .demo-status {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .demo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      button.demo-btn {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 0;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      button.demo-btn:active {
+        transform: translateY(1px);
+      }
+
+      .btn-reset {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+      }
+
+      .btn-accept {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .btn-reject {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+
+      pre {
+        background: rgba(2, 6, 23, 0.7);
+        padding: 16px;
+        border-radius: 16px;
+        overflow-x: auto;
+        font-size: 0.9rem;
+      }
+
+      footer {
+        text-align: center;
+        color: rgba(241, 245, 249, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p>Drop this script in your project</p>
+      <h1>Cookie Consent Banner Demo</h1>
+      <p>
+        The banner below is powered by the script inside <code>consent.html</code> and
+        demonstrates how analytics scripts stay paused until a visitor clicks
+        “Accept”.
+      </p>
+    </header>
+
+    <main class="layout">
+      <section class="card demo">
+        <h2>Interactive example</h2>
+        <p>
+          Trigger the banner via the buttons below. Analytics code will only run
+          when the user grants consent.
+        </p>
+        <p class="demo-status" id="consent-status">Checking current status…</p>
+        <div class="demo-actions">
+          <button class="demo-btn btn-accept" id="demo-accept">Simulate accept()</button>
+          <button class="demo-btn btn-reject" id="demo-reject">Simulate reject()</button>
+          <button class="demo-btn btn-reset" id="demo-reset">Reset choice</button>
+        </div>
+        <pre><code>&lt;script type="text/plain" data-category="analytics"&gt;
+  // Analytics code is deferred until "Accept"
+  console.log('gtag or pixel booted');
+&lt;/script&gt;</code></pre>
+        <p>
+          Open your browser console to see the analytics placeholder logging once
+          you opt-in.
+        </p>
+        <script type="text/plain" data-category="analytics">
+          console.log('[analytics] Running only because consent was granted');
+        </script>
+      </section>
+
+      <section class="card">
+        <h2>How it works</h2>
+        <ol>
+          <li>The script renders a bottom banner asking for cookie consent.</li>
+          <li>When the visitor accepts, we activate any script tags that have <code>type="text/plain"</code> and <code>data-category="analytics"</code>.</li>
+          <li>Choices are stored in <code>localStorage</code> so the experience persists between visits.</li>
+        </ol>
+        <p>
+          You can customise the message, hook into the events
+          (<code>cookie-consent:accepted</code> / <code>cookie-consent:rejected</code>)
+          or wire your own policy link via the exposed <code>CookieConsent.config</code>.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      Built for fast demos – copy the script below into your own page.
+    </footer>
+
+    <script>
+      (function () {
+        var KEY = 'cookieConsent';
+        var statusLabel = document.getElementById('consent-status');
+        var acceptBtn = document.getElementById('demo-accept');
+        var rejectBtn = document.getElementById('demo-reject');
+        var resetBtn = document.getElementById('demo-reset');
+
+        function refreshStatus() {
+          var state = localStorage.getItem(KEY);
+          var map = { yes: 'granted ✅', no: 'rejected 🚫' };
+          statusLabel.textContent = state
+            ? 'Current preference: ' + map[state]
+            : 'Current preference: not chosen yet';
+        }
+
+        window.addEventListener('cookie-consent:accepted', refreshStatus);
+        window.addEventListener('cookie-consent:rejected', refreshStatus);
+
+        acceptBtn.addEventListener('click', function () {
+          if (window.CookieConsent) window.CookieConsent.accept();
+          else localStorage.setItem(KEY, 'yes');
+          refreshStatus();
+        });
+
+        rejectBtn.addEventListener('click', function () {
+          if (window.CookieConsent) window.CookieConsent.reject();
+          else localStorage.setItem(KEY, 'no');
+          refreshStatus();
+        });
+
+        resetBtn.addEventListener('click', function () {
+          if (window.CookieConsent) {
+            window.CookieConsent.reset();
+          } else {
+            localStorage.removeItem(KEY);
+          }
+          refreshStatus();
+          window.location.reload();
+        });
+
+        refreshStatus();
+      })();
+    </script>
+
+    <!-- Consent script -->
+    <script>
+/**
+ * Cookie Consent + Pluggable Trackers (production ready with GA Ads ID)
+ */
+(function () {
+  var BRAND_PRIMARY = '#E65100';   // EmailFinder primary
+  var BRAND_SECONDARY = '#FF9800'; // EmailFinder secondary
+  var KEY = 'cookieConsent';
+  var config = {
+    policyUrl: '/cookie-policy.html'
+  };
+
+  // ---------- Core ----------
+  var hasActivatedScripts = false;
+
+  function activateAnalyticsScripts() {
+    if (hasActivatedScripts) return;
+    hasActivatedScripts = true;
+
+    function startActivation() {
+      var deferredScripts = document.querySelectorAll('script[type="text/plain"][data-category="analytics"]');
+
+      Array.prototype.forEach.call(deferredScripts, function (placeholder) {
+        var activated = document.createElement('script');
+        Array.prototype.slice.call(placeholder.attributes).forEach(function (attr) {
+          if (attr.name === 'type') return;
+          activated.setAttribute(attr.name, attr.value);
+        });
+
+        if (placeholder.src) {
+          activated.src = placeholder.src;
+        } else {
+          activated.textContent = placeholder.textContent;
+        }
+
+        placeholder.parentNode.insertBefore(activated, placeholder.nextSibling);
+        placeholder.parentNode.removeChild(placeholder);
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startActivation);
+    else startActivation();
+  }
+
+  function stateAccepted() { return localStorage.getItem(KEY) === 'yes'; }
+  function stateRejected() { return localStorage.getItem(KEY) === 'no'; }
+  function save(choice) { localStorage.setItem(KEY, choice ? 'yes' : 'no'); }
+
+  function removeBanner() {
+    var el = document.getElementById('cookie-consent');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+
+  function showBanner() {
+    if (document.getElementById('cookie-consent')) return;
+    var bar = document.createElement('div');
+    bar.id = 'cookie-consent';
+    bar.setAttribute('role', 'dialog');
+    bar.setAttribute('aria-live', 'polite');
+    bar.style.cssText = [
+      'position:fixed','left:0','right:0','bottom:0','z-index:1080',
+      'background:#111','color:#fff','box-shadow:0 -6px 20px rgba(0,0,0,.3)'
+    ].join(';');
+
+    bar.innerHTML = '' +
+      '<div style="max-width:1140px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">' +
+        '<span style="font-size:14px;line-height:1.4;flex:1">We use cookies to improve your experience and analyze traffic.</span>' +
+        '<a href="'+ (config.policyUrl || '#') +'" style="color:'+BRAND_SECONDARY+';text-decoration:underline;font-size:14px" target="_blank" rel="noopener">Learn more</a>' +
+        '<button id="cc-reject" style="background:#333;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:14px">Reject</button>' +
+        '<button id="cc-accept" style="background:'+BRAND_PRIMARY+';color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:14px">Accept</button>' +
+      '</div>';
+
+    document.body.appendChild(bar);
+
+    document.getElementById('cc-accept').addEventListener('click', function () {
+      save(true); removeBanner(); activateAnalyticsScripts();
+      window.dispatchEvent(new CustomEvent('cookie-consent:accepted'));
+    });
+    document.getElementById('cc-reject').addEventListener('click', function () {
+      save(false); removeBanner();
+      window.dispatchEvent(new CustomEvent('cookie-consent:rejected'));
+    });
+  }
+
+  // Public API
+  window.CookieConsent = {
+    accept: function(){ save(true); removeBanner(); activateAnalyticsScripts(); },
+    reject: function(){ save(false); removeBanner(); },
+    reset: function(){ localStorage.removeItem(KEY); },
+    config: config
+  };
+
+  // Boot
+  if (stateAccepted()) {
+    activateAnalyticsScripts();
+  } else if (stateRejected()) {
+    // do nothing
+  } else {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showBanner);
+    else showBanner();
+  }
+})();
+    </script>
+
+    <!-- Chat widget to show another blocked script -->
+    <script type="text/plain" data-category="analytics">
+      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+      (function(){
+        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+        s1.async=true;
+        s1.src='https://embed.tawk.to/68d289be2f2eec1925af0d28/1j5r6k4hi';
+        s1.charset='UTF-8';
+        s1.setAttribute('crossorigin','*');
+        s0.parentNode.insertBefore(s1,s0);
+      })();
+    </script>
+  </body>
+</html>
